@@ -198,6 +198,18 @@ async function main() {
   app.use(express.json());
   app.use(express.urlencoded({ extended: false }));
 
+  // POC CORS for the browser-rendered widget/template.
+  app.use("/api", (req, res, next) => {
+    res.setHeader("Access-Control-Allow-Origin", "*");
+    res.setHeader("Access-Control-Allow-Methods", "GET,POST,PATCH,OPTIONS");
+    res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
+    if (req.method === "OPTIONS") {
+      res.status(204).end();
+      return;
+    }
+    next();
+  });
+
   // Simple REST wrappers around the same in-memory todo store used by the MCP tools.
   app.get("/api/todos", (_req, res) => {
     res.json(listTodoItems());

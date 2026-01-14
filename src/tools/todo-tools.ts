@@ -44,19 +44,39 @@ export function registerTodoResources(server: McpServer) {
       mimeType: "text/html",
     },
     async (uri): Promise<any> => {
+      const items = listTodoItems();
+      const rows = items
+        .map((t) => {
+          const status = t.isComplete ? "Done" : "Todo";
+          const cls = t.isComplete ? "complete" : "";
+          return `<li class="${cls}"><span class="pill">${status}</span><span class="item">${escapeHtml(
+            t.item
+          )}</span></li>`;
+        })
+        .join("\n");
+
       const template = `<!doctype html>
 <html>
   <body>
     <style>
       :root { color-scheme: light dark; }
       body { font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; margin: 0; padding: 12px; }
-      main { border: 1px solid rgba(127,127,127,0.25); border-radius: 10px; padding: 12px; }
+      main { border: 1px solid rgba(127,127,127,0.25); border-radius: 10px; padding: 12px; min-height: 220px; }
       h2 { margin: 0 0 10px; font-size: 1.05rem; }
-      ul { margin: 0; padding-left: 18px; }
+      ul { margin: 0; padding-left: 0; list-style: none; max-height: 260px; overflow: auto; }
+      li { display: flex; gap: 10px; align-items: center; padding: 8px 10px; border-radius: 8px; }
+      li:hover { background: rgba(127,127,127,0.08); }
+      .complete { opacity: 0.75; }
+      .complete .item { text-decoration: line-through; }
+      .pill { font-size: 12px; padding: 2px 8px; border-radius: 999px; border: 1px solid rgba(127,127,127,0.35); }
+      .muted { opacity: 0.8; }
     </style>
     <main>
       <h2>Todos</h2>
-      <!-- Client renders structuredContent.todos -->
+      ${items.length === 0 ? '<p class="muted" style="margin: 0 0 10px;">No todos yet.</p>' : ""}
+      <ul id="todoList">
+        ${rows}
+      </ul>
     </main>
   </body>
 </html>`;
@@ -72,6 +92,15 @@ export function registerTodoResources(server: McpServer) {
       };
     }
   );
+}
+
+function escapeHtml(input: string): string {
+  return input
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/\"/g, "&quot;")
+    .replace(/'/g, "&#39;");
 }
 
 export function registerTodoTools(server: McpServer) {
